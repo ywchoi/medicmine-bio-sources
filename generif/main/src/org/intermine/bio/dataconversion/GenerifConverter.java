@@ -27,7 +27,7 @@ import org.intermine.xml.full.Item;
 
 /**
  *
- * @author
+ * @author sc
  */
 public class GenerifConverter extends BioFileConverter
 {
@@ -36,9 +36,8 @@ public class GenerifConverter extends BioFileConverter
     private static final String DATASET_TITLE = "GeneRIF";
     private static final String DATA_SOURCE_NAME = "NCBI";
 
-    //
+    // for the moment dealing only with ath
     private Item org;
-
     private static final String ATH_TAXID = "3702";
 
     private Map<String, String> pubItems = new HashMap<String, String>();
@@ -64,7 +63,7 @@ public class GenerifConverter extends BioFileConverter
         File currentFile = getCurrentFile();
 
         if ("generifs_basic".equals(currentFile.getName())) {
-            processScoreFile(reader, org);
+            processFile(reader, org);
         } else {
             LOG.info("WWSS skipping file: " + currentFile.getName());
             //            throw new IllegalArgumentException("Unexpected file: "
@@ -73,18 +72,24 @@ public class GenerifConverter extends BioFileConverter
     }
 
     /**
-     * Process all rows of the
-     * Drosophila_Cell_Lines_and_Developmental_Stages_Gene_Scores.txt file
+     * Process all rows of the generifs_basic file, available at
+     * ftp://ftp.ncbi.nih.gov/gene/GeneRIF/generifs_basic
      *
      * @param reader
-     *            a reader for the
-     *            Drosophila_Cell_Lines_and_Developmental_Stages_Gene_Scores.txt
-     *            file
+     *            a reader for the generifs_basic file
      *
      * @throws IOException
      * @throws ObjectStoreException
+     *
+     * FILE FORMAT tsv
+     * HEADER
+     * #TaxID GeneID PubMedID lastUpdateTimeStamp   GeneRIFText
+     * EXAMPLE
+     * 3702    814572  17550895        2010-01-21 00:00        AtCCMA interacts with AtCcmB [..]
+     *
+     *
      */
-    private void processScoreFile(Reader reader, Item organism)
+    private void processFile(Reader reader, Item organism)
             throws IOException, ObjectStoreException {
         Iterator<?> tsvIter;
         try {
@@ -95,31 +100,18 @@ public class GenerifConverter extends BioFileConverter
         IdResolver athResolver = IdResolverService.getIdResolverByOrganism("3702");
         String pid = null;
 
-
         String [] headers = null;
         int lineNumber = 0;
-        LOG.info("WW  BEGIN -----------------------");
 
         while (tsvIter.hasNext()) {
             String[] line = (String[]) tsvIter.next();
 
-            //            if (lineNumber == 0) {
-            //LOG.info("SCOREg " + line[0]);
-            // column headers - strip off any extra columns - FlyAtlas
-            // not necessary for expressionScore, but OK to keep the code
-            //                int end = 0;
-            //                for (int i = 0; i < line.length; i++) {
-            //                    if (StringUtils.isEmpty(line[i])) {
-            //                        break;
-            //                    }
-            //                    end++;
-            //                }
-            //                headers = new String[end];
-            //                System.arraycopy(line, 0, headers, 0, end);
-            //                LOG.info("WW header lenght " + headers.length);
-            //                lineNumber++;
-            //                continue;
-            //            }
+            // this can be omitted
+            if (lineNumber == 0) {
+                checkHeader(line);
+                lineNumber++;
+                continue;
+            }
 
             String taxid = line[0];
             String geneId = line [1];
@@ -127,6 +119,7 @@ public class GenerifConverter extends BioFileConverter
             String timeStamp = line[3];
             String annotation = line [4];
 
+            // dealing only with ATH for now
             if (!taxid.equalsIgnoreCase(ATH_TAXID)) {
                 continue;
             }
@@ -138,7 +131,8 @@ public class GenerifConverter extends BioFileConverter
                 continue;
             }
 
-            // NOT WORKING!
+            // NOT WORKING!? see
+            // http://intermine.readthedocs.org/en/latest/database/data-sources/id-resolvers
             //          if (pid == null) {
             //              LOG.info("MISSING ID: " + geneId);
             //              continue;
@@ -146,7 +140,7 @@ public class GenerifConverter extends BioFileConverter
 
 
             pid = athResolver.resolveId(taxid, geneId).iterator().next();
-            LOG.info("READING " + taxid + ": " + pid + "<->" + geneId + "|" + pubMedId + "|"
+            LOG.debug("READING " + taxid + ": " + pid + "<->" + geneId + "|" + pubMedId + "|"
                     + timeStamp + "--" + annotation);
 
             Item ann = createGeneRIF(annotation, timeStamp);
@@ -161,50 +155,25 @@ public class GenerifConverter extends BioFileConverter
         }
     }
 
-
     /**
-     * Unify variations on similar official names.
-     *
-     * TODO, data from marc
-     *
-     * @param name the original 'official name' value
-     * @param type cell line or developmental stage
-     * @return a unified official name
+     * @param line
      */
-    private String correctOfficialName(String name, String type) {
-        if (name == null) {
-            return null;
+    private void checkHeader(String[] line) {
+        // column headers - strip off any extra columns - FlyAtlas
+        // not necessary
+        String[] headers;
+        int end = 0;
+        for (int i = 0; i < line.length; i++) {
+            // if (StringUtils.isEmpty(line[i])) {
+            if (line[i].isEmpty()) {
+                break;
+            }
+            end++;
         }
-
-        if (type.equals(ATH_TAXID)) {
-            name = name.replace("_", " ");
-
-            if (name.matches("^emb.*\\d-\\dh$")) {
-                name = name.replaceFirst("emb", "Embryo");
-                name = name.replaceFirst("h", " h");
-            }
-            // Assume string like "L3_larvae_dark_blue" has the official name
-            // "L3 stage larvae dark blue"
-            if (name.matches("^L\\d.*larvae.*$")) {
-                name = name.replace("larvae", "stage larvae");
-            }
-            // TODO "WPP_2days" is not in the database
-            if (name.matches("^WPP.*$")) {
-                if (name.endsWith("hr")) {
-                    String[] strs = name.split(" ");
-                    StringBuffer sb = new StringBuffer();
-                    sb.append(strs[0]).append(" + ").append(strs[1]);
-                    name = name.replaceFirst("hr", " h");
-                } else if (name.endsWith("days")) {
-
-                }
-                name = name.replaceFirst("WPP", "White prepupae (WPP)");
-            }
-        }
-
-        return name;
+        headers = new String[end];
+        System.arraycopy(line, 0, headers, 0, end);
+        LOG.debug("WW header lenght " + headers.length);
     }
-
 
 
     /**
@@ -227,10 +196,11 @@ public class GenerifConverter extends BioFileConverter
      * Create and store a BioEntity item on the first time called.
      *
      * @param primaryId the primaryIdentifier
-     * @param type gene or exon
+     * @param type the type of bioentity (gene, exon..)
      * @throws ObjectStoreException
      */
     private void createBioEntity(String primaryId, String type) throws ObjectStoreException {
+        // doing only genes here
         Item bioentity = null;
 
         if ("Gene".equals(type)) {
@@ -243,7 +213,7 @@ public class GenerifConverter extends BioFileConverter
         }
     }
     /**
-     * Create and store a BioEntity item on the first time called.
+     * Create and store a Publication item on the first time called.
      *
      * @param primaryId the primaryIdentifier
      * @param type gene or exon
@@ -259,23 +229,6 @@ public class GenerifConverter extends BioFileConverter
         }
     }
 
-//    private String getPub(String pubMedId) throws ObjectStoreException {
-//        String itemId = pubs.get(pubMedId);
-//        if (itemId == null) {
-//            Item pub = createItem("Publication");
-//            pub.setAttribute("pubMedId", pubMedId);
-//            itemId = pub.getIdentifier();
-//            pubs.put(pubMedId, itemId);
-//            try {
-//                store(pub);
-//            } catch (ObjectStoreException e) {
-//                throw new ObjectStoreException(e);
-//            }
-//        }
-//        return itemId;
-//    }
-
-
 
     /**
      * Create and store a organism item on the first time called.
@@ -287,7 +240,5 @@ public class GenerifConverter extends BioFileConverter
         org.setAttribute("taxonId", ATH_TAXID);
         store(org);
     }
-
-
 
 }
