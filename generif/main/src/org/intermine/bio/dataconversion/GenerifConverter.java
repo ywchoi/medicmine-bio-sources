@@ -140,7 +140,7 @@ public class GenerifConverter extends BioFileConverter
 
 
             pid = athResolver.resolveId(taxid, geneId).iterator().next();
-            LOG.debug("READING " + taxid + ": " + pid + "<->" + geneId + "|" + pubMedId + "|"
+            LOG.info("READING " + taxid + ": " + pid + "<->" + geneId + "|" + pubMedId + "|"
                     + timeStamp + "--" + annotation);
 
             Item ann = createGeneRIF(annotation, timeStamp);
@@ -172,7 +172,7 @@ public class GenerifConverter extends BioFileConverter
         }
         headers = new String[end];
         System.arraycopy(line, 0, headers, 0, end);
-        LOG.debug("WW header lenght " + headers.length);
+        LOG.info("WW header lenght " + headers.length);
     }
 
 
@@ -206,7 +206,7 @@ public class GenerifConverter extends BioFileConverter
         if ("Gene".equals(type)) {
             if (!geneItems.containsKey(primaryId)) {
                 bioentity = createItem("Gene");
-                bioentity.setAttribute("symbol", primaryId);
+                bioentity.setAttribute("primaryIdentifier", primaryId);
                 store(bioentity);
                 geneItems.put(primaryId, bioentity.getIdentifier());
             }
