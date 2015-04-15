@@ -35,7 +35,7 @@ public class InparanoidHomologsConverter extends BioFileConverter
 {
     //
     private static final String DATASET_TITLE = "Phytozome Homologs";
-    private static final String DATA_SOURCE_NAME = "Phytozome v10";
+    private static final String DATA_SOURCE_NAME = "Phytozome";
     private static final Logger LOG =
         Logger.getLogger(InparanoidHomologsConverter.class);
     private HashMap<Integer,String> organismMap = new HashMap<Integer,String>();
