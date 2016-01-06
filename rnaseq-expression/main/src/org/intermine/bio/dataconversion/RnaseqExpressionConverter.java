@@ -34,14 +34,14 @@ import org.intermine.xml.full.Item;
  */
 public class RnaseqExpressionConverter extends BioFileConverter
 {
-    //
+    // TODO get those from project file
+    private static final String TAX_ID = "3702";
     private static final String DATASET_TITLE = "RNAseq expression";
     private static final String DATA_SOURCE_NAME = "whoknows";
+
     private static final Logger LOG = Logger.getLogger(RnaseqExpressionConverter.class);
     private static final int STUDIES_NR = 4;
     private Item org;
-    // TODO get taxid from property file
-    private static final String TAX_ID = "3702";
 
     private static Map<String, String> studies = null;
     private Map<String, String> geneItems = new HashMap<String, String>();
@@ -109,7 +109,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
 
         while (tsvIter.hasNext()) {
             String[] line = (String[]) tsvIter.next();
-            LOG.info("SCOREg " + line[0]);
+            LOG.debug("BIOENTITY " + line[0]);
 
             if (lineNumber == 0) {
                 // column headers - strip off any extra columns
@@ -139,8 +139,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
 
                 // scores start from column 2 and end at STUDIES_NR +1 which is headers[1,SN]
                 for (int i = 1; i <= STUDIES_NR; i++) {
-                    String col = headers[i].replace("_TMP", "");
-                    //                    col = correctOfficialName(col);
+                    String col = headers[i].replace("_TPM", "");
                     if (!studies.containsKey(col)) {
                         Item experiment = createExperiment(col);
                         studies.put(col, experiment.getIdentifier());
