@@ -41,9 +41,10 @@ public class RnaseqExpressionConverter extends BioFileConverter
 
     private static final Logger LOG = Logger.getLogger(RnaseqExpressionConverter.class);
     private static final int STUDIES_NR = 4;
+    private static final String CATEGORY = "RNA-Seq";
     private Item org;
 
-    private static Map<String, String> studies = null;
+    private Map<String, String> studies = new HashMap<String, String>();
     private Map<String, String> geneItems = new HashMap<String, String>();
     private Map<String, String> transcriptItems = new HashMap<String, String>();
 
@@ -70,6 +71,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
     public void process(Reader reader) throws Exception {
         // There are two types of files:
         // The following code works out which file we are reading
+        //studies = new HashMap<String, String>();
         File currentFile = getCurrentFile();
 
         if ("4samples.gene".equals(currentFile.getName())) {
@@ -105,7 +107,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
         String [] headers = null;
         int lineNumber = 0;
 
-        studies = new HashMap<String, String>();
+//        studies = new HashMap<String, String>();
 
         while (tsvIter.hasNext()) {
             String[] line = (String[]) tsvIter.next();
@@ -183,7 +185,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
      */
     private void createBioEntity(String primaryId, String type) throws ObjectStoreException {
         Item bioentity = null;
-        LOG.info("BIO: " + type + " -- " + primaryId);
+        LOG.debug("BIO: " + type + " -- " + primaryId);
         if ("Gene".equals(type)) {
             if (!geneItems.containsKey(primaryId)) {
                 bioentity = createItem("Gene");
@@ -219,8 +221,10 @@ public class RnaseqExpressionConverter extends BioFileConverter
      * @return an Item representing the CellLine
      */
     private Item createExperiment(String name) throws ObjectStoreException {
+        LOG.info("EXPE: " + name);
         Item e = createItem("Experiment");
         e.setAttribute("title", name);
+        e.setAttribute("category", CATEGORY);
         store(e);
         return e;
     }
