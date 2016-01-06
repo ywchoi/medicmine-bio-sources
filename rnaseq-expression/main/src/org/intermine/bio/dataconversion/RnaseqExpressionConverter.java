@@ -40,16 +40,12 @@ public class RnaseqExpressionConverter extends BioFileConverter
     private static final Logger LOG = Logger.getLogger(RnaseqExpressionConverter.class);
     private static final int STUDIES_NR = 4;
     private Item org;
-
-    // private static final String CELL_LINE = "cell line";
+    // TODO get taxid from property file
     private static final String TAX_ID = "3702";
 
     private static Map<String, String> studies = null;
-
     private Map<String, String> geneItems = new HashMap<String, String>();
     private Map<String, String> transcriptItems = new HashMap<String, String>();
-
-
 
     /**
      * Constructor
@@ -72,12 +68,8 @@ public class RnaseqExpressionConverter extends BioFileConverter
      * {@inheritDoc}
      */
     public void process(Reader reader) throws Exception {
-        // There are two files:
-        // - Drosophila_Cell_Lines_and_Developmental_Stages_Gene_Scores.txt -
-        // estimated expression levels for annotated genes
-        // - Drosophila_Cell_Lines_and_Developmental_Stages_Exon_Scores.txt -
-        // estimated expression levels for annotated transcripts
-        // The following code works out which file we are reading and calls the corresponding method
+        // There are two types of files:
+        // The following code works out which file we are reading
         File currentFile = getCurrentFile();
 
         if ("4samples.gene".equals(currentFile.getName())) {
@@ -103,7 +95,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
      * @throws ObjectStoreException
      */
     private void processFile(Reader reader, String type, Item organism)
-            throws IOException, ObjectStoreException {
+        throws IOException, ObjectStoreException {
         Iterator<?> tsvIter;
         try {
             tsvIter = FormattedTextParser.parseTabDelimitedReader(reader);
@@ -145,9 +137,9 @@ public class RnaseqExpressionConverter extends BioFileConverter
                     createBioEntity(primaryId, "Transcript");
                 }
 
-                // Cell line starts from column 2 and ends at STUDIES_NR +1 which is headers[1,(SN-1)]
+                // scores start from column 2 and end at STUDIES_NR +1 which is headers[1,SN]
                 for (int i = 1; i <= STUDIES_NR; i++) {
-                    String col = headers[i].replace("_TMP", "");;
+                    String col = headers[i].replace("_TMP", "");
                     //                    col = correctOfficialName(col);
                     if (!studies.containsKey(col)) {
                         Item experiment = createExperiment(col);
@@ -169,11 +161,11 @@ public class RnaseqExpressionConverter extends BioFileConverter
         }
     }
 
-
     /**
-     * Create and store a GeneExpressionScore item on the first time called.
+     * Create and store a RnaseqExpression item on the first time called.
      *
      * @param score the expression score
+     * @param type gene or transcript
      * @return an Item representing the GeneExpressionScore
      */
     private Item createRNASeqExpression(String score, String type) throws ObjectStoreException {
@@ -182,7 +174,6 @@ public class RnaseqExpressionConverter extends BioFileConverter
         expression.setAttribute("type", type);
         return expression;
     }
-
 
     /**
      * Create and store a BioEntity item on the first time called.
@@ -211,7 +202,6 @@ public class RnaseqExpressionConverter extends BioFileConverter
         }
     }
 
-
     /**
      * Create and store a organism item on the first time called.
      *
@@ -224,7 +214,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
     }
 
     /**
-     * Create and store a CellLine item on the first time called.
+     * Create and store an Experiment item on the first time called.
      *
      * @param name the cell line name
      * @return an Item representing the CellLine
@@ -232,70 +222,9 @@ public class RnaseqExpressionConverter extends BioFileConverter
     private Item createExperiment(String name) throws ObjectStoreException {
         Item e = createItem("Experiment");
         e.setAttribute("title", name);
-        // TODO add ref to dataset
         store(e);
         return e;
     }
 
-
-
-    /**
-     * Unify variations on similar official names.
-     *
-     * @param name the original 'official name' value
-     * @param type cell line or developmental stage
-     * @return a unified official name
-     */
-    private String correctOfficialName(String name) {
-        if (name == null) {
-            return null;
-        }
-
-        name = name.replace("_", " ");
-
-        if (name.matches("^emb.*\\d-\\dh$")) {
-            name = name.replaceFirst("emb", "Embryo");
-            name = name.replaceFirst("h", " h");
-        }
-        // Assume string like "L3_larvae_dark_blue" has the offical name
-        // "L3 stage larvae dark blue"
-        if (name.matches("^L\\d.*larvae.*$")) {
-            name = name.replace("larvae", "stage larvae");
-        }
-        // TODO "WPP_2days" is not in the database
-        if (name.matches("^WPP.*$")) {
-            if (name.endsWith("hr")) {
-                String[] strs = name.split(" ");
-                StringBuffer sb = new StringBuffer();
-                sb.append(strs[0]).append(" + ").append(strs[1]);
-                name = name.replaceFirst("hr", " h");
-            } else if (name.endsWith("days")) {
-
-            }
-            name = name.replaceFirst("WPP", "White prepupae (WPP)");
-        }
-
-        return name;
-    }
-
-
-
 }
 
-
-/*
-public class RnaseqExpressionConverter extends BioFileConverter
-{
-    //
-    private static final String DATASET_TITLE = "Add DataSet.title here";
-    private static final String DATA_SOURCE_NAME = "Add DataSource.name here";
-
-    public RnaseqExpressionConverter(ItemWriter writer, Model model) {
-        super(writer, model, DATA_SOURCE_NAME, DATASET_TITLE);
-    }
-
-    public void process(Reader reader) throws Exception {
-
-    }
-}
- */
