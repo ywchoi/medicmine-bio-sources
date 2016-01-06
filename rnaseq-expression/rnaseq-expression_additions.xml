@@ -1,22 +1,24 @@
 <?xml version="1.0"?>
 <classes>
 
-    <class name="Gene" is-interface="true">
-        <collection name="rnaseqExpressions" referenced-type="RnaSeqExpression" reverse-reference="gene" />
-    </class>
+<class name="Gene" is-interface="true">
+  <collection name="RNASeqExpressions" referenced-type="RnaseqExpression" reverse-reference="gene" />
+</class>
 
-    <class name="Transcript" is-interface="true">
-        <collection name="rnaseqExpressions" referenced-type="RnaSeqExpression" reverse-reference="transcript" />
-    </class>
+<class name="Transcript" is-interface="true">
+  <collection name="RNASeqExpressions" referenced-type="RnaseqExpression" reverse-reference="transcript" />
+</class>
 
-    <class name="Experiment" is-interface="true">
-        <attribute name="title" type="java.lang.String" />
-        <attribute name="category" type="java.lang.String" />
-        <reference name="dataSet" referenced-type="DataSet" reverse-reference="experiments" />
-        <collection name="properties" referenced-type="SampleProperty" reverse-reference="experiments"/>
-    </class>
+<class name="Experiment" is-interface="true">
+  <attribute name="title" type="java.lang.String" />
+  <attribute name="category" type="java.lang.String" />
+  <reference name="dataSet" referenced-type="DataSet" reverse-reference="experiments" />
+<!--
+  <collection name="properties" referenced-type="SampleProperty" reverse-reference="experiments"/>
+-->
+</class>
 
-<class name="RNASeqExpression" is-interface="true">
+<class name="RnaseqExpression" is-interface="true">
   <attribute name="TPM" type="java.lang.Double" />
   <attribute name="type" type="java.lang.String" />
   <reference name="gene" referenced-type="Gene" reverse-reference="RNASeqExpressions" />
@@ -25,10 +27,25 @@
   <reference name="organism" referenced-type="Organism" />
 </class>
 
-    <class name="SampleProperty" is-interface="true">
-        <attribute name="name" type="java.lang.String"/>
-        <attribute name="value" type="java.lang.String"/>
-        <collection name="experiments" referenced-type="Experiment" reverse-reference="properties" />
+<!--
+    <class name="Sample" is-interface="true">
+        <attribute name="name" type="java.lang.String" />
+        <attribute name="description" type="java.lang.String" />
+        <attribute name="file" type="java.lang.String" />
+        <attribute name="type" type="java.lang.String" />
+
+        <reference name="organism" referenced-type="Organism" />
+        <reference name="experiment" referenced-type="Experiment" reverse-reference="samples" />
+        <reference name="lab" referenced-type="Lab" reverse-reference="samples" />
+        <collection name="expressions" referenced-type="Expression" reverse-reference="sample" />
+        <collection name="properties" referenced-type="SampleProperty" reverse-reference="samples"/>
+    </class>
+
+<class name="SampleProperty" is-interface="true">
+  <attribute name="name" type="java.lang.String"/>
+  <attribute name="value" type="java.lang.String"/>
+  <collection name="experiments" referenced-type="Experiment" reverse-reference="properties" />
 </class>
+-->
 
 </classes>

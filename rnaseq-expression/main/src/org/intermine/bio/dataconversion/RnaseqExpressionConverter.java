@@ -38,13 +38,13 @@ public class RnaseqExpressionConverter extends BioFileConverter
     private static final String DATASET_TITLE = "RNAseq expression";
     private static final String DATA_SOURCE_NAME = "whoknows";
     private static final Logger LOG = Logger.getLogger(RnaseqExpressionConverter.class);
-
+    private static final int STUDIES_NR = 4;
     private Item org;
 
-    private static final String CELL_LINE = "cell line";
+    // private static final String CELL_LINE = "cell line";
     private static final String TAX_ID = "3702";
 
-    private static Map<String, String> cellLines = null;
+    private static Map<String, String> studies = null;
 
     private Map<String, String> geneItems = new HashMap<String, String>();
     private Map<String, String> transcriptItems = new HashMap<String, String>();
@@ -81,9 +81,11 @@ public class RnaseqExpressionConverter extends BioFileConverter
         File currentFile = getCurrentFile();
 
         if ("4samples.gene".equals(currentFile.getName())) {
-            processGeneFile(reader, org);
+            LOG.info("FILE 4 GENES");
+            processFile(reader, "gene", org);
         } else if ("4samples.transcript".equals(currentFile.getName())) {
-            processTranscriptFile(reader, org);
+            LOG.info("FILE 4 TRANSCRIPTS");
+            processFile(reader, "transcript", org);
         } else {
             throw new IllegalArgumentException("Unexpected file: "
                     + currentFile.getName());
@@ -91,18 +93,17 @@ public class RnaseqExpressionConverter extends BioFileConverter
     }
 
     /**
-     * Process all rows of the
-     * Drosophila_Cell_Lines_and_Developmental_Stages_Gene_Scores.txt file
+     * Process all rows of the expression files
      *
      * @param reader
      *            a reader for the
-     *            Drosophila_Cell_Lines_and_Developmental_Stages_Gene_Scores.txt
-     *            file
+     *            SAMPLE_NRsample.gene and SAMPLE_NRsample.transcript
+     *            files
      * @throws IOException
      * @throws ObjectStoreException
      */
-    private void processGeneFile(Reader reader, Item organism)
-        throws IOException, ObjectStoreException {
+    private void processFile(Reader reader, String type, Item organism)
+            throws IOException, ObjectStoreException {
         Iterator<?> tsvIter;
         try {
             tsvIter = FormattedTextParser.parseTabDelimitedReader(reader);
@@ -112,15 +113,14 @@ public class RnaseqExpressionConverter extends BioFileConverter
         String [] headers = null;
         int lineNumber = 0;
 
-        cellLines = new HashMap<String, String>();
+        studies = new HashMap<String, String>();
 
         while (tsvIter.hasNext()) {
             String[] line = (String[]) tsvIter.next();
-            LOG.debug("SCOREg " + line[0]);
+            LOG.info("SCOREg " + line[0]);
 
             if (lineNumber == 0) {
-                // column headers - strip off any extra columns - FlyAtlas
-                // not necessary for FlyExpressionScore, but OK to keep the code
+                // column headers - strip off any extra columns
                 int end = 0;
                 for (int i = 0; i < line.length; i++) {
                     if (StringUtils.isEmpty(line[i])) {
@@ -130,144 +130,43 @@ public class RnaseqExpressionConverter extends BioFileConverter
                 }
                 headers = new String[end];
                 System.arraycopy(line, 0, headers, 0, end);
+                LOG.info("HHH " + headers.length + " end=" + end);
             } else {
-                String primaryId = line[0]; //Gene_FBgn
-                // there seems to be some empty lines at the end of the file - FlyAtlas
+                String primaryId = line[0]; //Gene id
+                // if empty lines at the end of the file
                 if (StringUtils.isEmpty(primaryId)) {
                     break;
                 }
-                createBioEntity(primaryId, "Gene");
 
-                // Cell line starts from column 6 and ends at 30 which is hearder[5-29]
-                for (int i = 5; i < 30; i++) {
-                    String col = headers[i];
-                    col = correctOfficialName(col, CELL_LINE);
+                if (type.equalsIgnoreCase("gene")) {
+                    createBioEntity(primaryId, "Gene");
+                }
+                if (type.equalsIgnoreCase("transcript")) {
+                    createBioEntity(primaryId, "Transcript");
+                }
 
-                    if (!cellLines.containsKey(col)) {
-                        Item cellLine = createCellLine(col);
-                        cellLines.put(col, cellLine.getIdentifier());
+                // Cell line starts from column 2 and ends at STUDIES_NR +1 which is headers[1,(SN-1)]
+                for (int i = 1; i <= STUDIES_NR; i++) {
+                    String col = headers[i].replace("_TMP", "");;
+                    //                    col = correctOfficialName(col);
+                    if (!studies.containsKey(col)) {
+                        Item experiment = createExperiment(col);
+                        studies.put(col, experiment.getIdentifier());
                     }
-                    Item score = createGeneExpressionScore(line[i]);
-                    score.setReference("gene", geneItems.get(primaryId));
-                    score.setReference("cellLine", cellLines.get(col));
+                    Item score = createRNASeqExpression(line[i], type);
+                    if (type.equalsIgnoreCase("gene")) {
+                        score.setReference("gene", geneItems.get(primaryId));
+                    }
+                    if (type.equalsIgnoreCase("transcript")) {
+                        score.setReference("transcript", transcriptItems.get(primaryId));
+                    }
+                    score.setReference("study", studies.get(col));
                     score.setReference("organism", organism);
                     store(score);
                 }
-
             }
             lineNumber++;
         }
-    }
-
-    /**
-     * Process all rows of the
-     * Drosophila_Cell_Lines_and_Developmental_Stages_Exon_Scores.txt file
-     *
-     * @param reader
-     *            a reader for the
-     *            Drosophila_Cell_Lines_and_Developmental_Stages_Exon_Scores.txt
-     *            file
-     * @throws IOException
-     * @throws ObjectStoreException
-     */
-    private void processTranscriptFile(Reader reader, Item organism)
-        throws IOException, ObjectStoreException {
-        Iterator<?> tsvIter;
-        try {
-            tsvIter = FormattedTextParser.parseTabDelimitedReader(reader);
-        } catch (Exception e) {
-            throw new BuildException("cannot parse file: " + getCurrentFile(), e);
-        }
-        String [] headers = null;
-        int lineNumber = 0;
-
-        cellLines = new HashMap<String, String>();
-
-        while (tsvIter.hasNext()) {
-            String[] line = (String[]) tsvIter.next();
-            LOG.debug("SCOREe " + line[4]);
-
-            if (lineNumber == 0) {
-                // column headers - strip off any extra columns - FlyAtlas
-                // not necessary for FlyExpressionScore, but OK to keep the code
-                int end = 0;
-                for (int i = 0; i < line.length; i++) {
-                    if (StringUtils.isEmpty(line[i])) {
-                        break;
-                    }
-                    end++;
-                }
-                headers = new String[end];
-                System.arraycopy(line, 0, headers, 0, end);
-            } else {
-                String primaryId = line[4]; //Annotation ID
-                // there seems to be some empty lines at the end of the file - FlyAtlas
-                if (StringUtils.isEmpty(primaryId)) {
-                    break;
-                }
-                createBioEntity(primaryId, "Transcript");
-
-                // Cell line starts from column 8 and ends at 32 which is header[7-31]
-                for (int i = 7; i < 32; i++) {
-                    String col = headers[i];
-                    col = correctOfficialName(col, CELL_LINE);
-
-                    if (!cellLines.containsKey(col)) {
-                        Item cellLine = createCellLine(col);
-                        cellLines.put(col, cellLine.getIdentifier());
-                    }
-
-                    Item score = createTranscriptExpression(line[i]);
-                    score.setReference("transcript", transcriptItems.get(primaryId));
-                    score.setReference("cellLine", cellLines.get(col));
-                    score.setReference("organism", organism);
-                    store(score);
-                }
-
-            }
-            lineNumber++;
-        }
-    }
-
-    /**
-     * Unify variations on similar official names.
-     *
-     * @param name the original 'official name' value
-     * @param type cell line or developmental stage
-     * @return a unified official name
-     */
-    private String correctOfficialName(String name, String type) {
-        if (name == null) {
-            return null;
-        }
-
-        if (type.equals(CELL_LINE)) {
-            name = name.replace("_", " ");
-
-            if (name.matches("^emb.*\\d-\\dh$")) {
-                name = name.replaceFirst("emb", "Embryo");
-                name = name.replaceFirst("h", " h");
-            }
-            // Assume string like "L3_larvae_dark_blue" has the offical name
-            // "L3 stage larvae dark blue"
-            if (name.matches("^L\\d.*larvae.*$")) {
-                name = name.replace("larvae", "stage larvae");
-            }
-            // TODO "WPP_2days" is not in the database
-            if (name.matches("^WPP.*$")) {
-                if (name.endsWith("hr")) {
-                    String[] strs = name.split(" ");
-                    StringBuffer sb = new StringBuffer();
-                    sb.append(strs[0]).append(" + ").append(strs[1]);
-                    name = name.replaceFirst("hr", " h");
-                } else if (name.endsWith("days")) {
-
-                }
-                name = name.replaceFirst("WPP", "White prepupae (WPP)");
-            }
-        }
-
-        return name;
     }
 
 
@@ -277,25 +176,13 @@ public class RnaseqExpressionConverter extends BioFileConverter
      * @param score the expression score
      * @return an Item representing the GeneExpressionScore
      */
-    private Item createGeneExpressionScore(String score) throws ObjectStoreException {
-        Item expressionscore = createItem("GeneExpressionScore");
-        expressionscore.setAttribute("score", score);
-
-        return expressionscore;
+    private Item createRNASeqExpression(String score, String type) throws ObjectStoreException {
+        Item expression = createItem("RnaseqExpression");
+        expression.setAttribute("TPM", score);
+        expression.setAttribute("type", type);
+        return expression;
     }
 
-    /**
-     * Create and store a transcriptExpressionScore item on the first time called.
-     *
-     * @param score the expression score
-     * @return an Item representing the transcriptExpressionScore
-     */
-    private Item createTranscriptExpression(String score) throws ObjectStoreException {
-        Item expressionscore = createItem("transcriptExpressionScore");
-        expressionscore.setAttribute("score", score);
-
-        return expressionscore;
-    }
 
     /**
      * Create and store a BioEntity item on the first time called.
@@ -306,7 +193,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
      */
     private void createBioEntity(String primaryId, String type) throws ObjectStoreException {
         Item bioentity = null;
-
+        LOG.info("BIO: " + type + " -- " + primaryId);
         if ("Gene".equals(type)) {
             if (!geneItems.containsKey(primaryId)) {
                 bioentity = createItem("Gene");
@@ -342,13 +229,56 @@ public class RnaseqExpressionConverter extends BioFileConverter
      * @param name the cell line name
      * @return an Item representing the CellLine
      */
-    private Item createCellLine(String name) throws ObjectStoreException {
-        Item cellline = createItem("CellLine");
-        cellline.setAttribute("name", name);
-        store(cellline);
-
-        return cellline;
+    private Item createExperiment(String name) throws ObjectStoreException {
+        Item e = createItem("Experiment");
+        e.setAttribute("title", name);
+        // TODO add ref to dataset
+        store(e);
+        return e;
     }
+
+
+
+    /**
+     * Unify variations on similar official names.
+     *
+     * @param name the original 'official name' value
+     * @param type cell line or developmental stage
+     * @return a unified official name
+     */
+    private String correctOfficialName(String name) {
+        if (name == null) {
+            return null;
+        }
+
+        name = name.replace("_", " ");
+
+        if (name.matches("^emb.*\\d-\\dh$")) {
+            name = name.replaceFirst("emb", "Embryo");
+            name = name.replaceFirst("h", " h");
+        }
+        // Assume string like "L3_larvae_dark_blue" has the offical name
+        // "L3 stage larvae dark blue"
+        if (name.matches("^L\\d.*larvae.*$")) {
+            name = name.replace("larvae", "stage larvae");
+        }
+        // TODO "WPP_2days" is not in the database
+        if (name.matches("^WPP.*$")) {
+            if (name.endsWith("hr")) {
+                String[] strs = name.split(" ");
+                StringBuffer sb = new StringBuffer();
+                sb.append(strs[0]).append(" + ").append(strs[1]);
+                name = name.replaceFirst("hr", " h");
+            } else if (name.endsWith("days")) {
+
+            }
+            name = name.replaceFirst("WPP", "White prepupae (WPP)");
+        }
+
+        return name;
+    }
+
+
 
 }
 
@@ -368,4 +298,4 @@ public class RnaseqExpressionConverter extends BioFileConverter
 
     }
 }
-*/
+ */
