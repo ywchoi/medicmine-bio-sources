@@ -223,7 +223,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
     private Item createExperiment(String name) throws ObjectStoreException {
         LOG.info("EXPE: " + name);
         Item e = createItem("Experiment");
-        e.setAttribute("title", name);
+        e.setAttribute("SRAaccession", name);
         e.setAttribute("category", CATEGORY);
         store(e);
         return e;
