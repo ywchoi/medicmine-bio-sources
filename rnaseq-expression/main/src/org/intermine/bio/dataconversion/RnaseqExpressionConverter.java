@@ -36,8 +36,8 @@ public class RnaseqExpressionConverter extends BioFileConverter
 {
     // TODO get those from project file
     private static final String TAX_ID = "3702";
-    private static final String DATASET_TITLE = "RNAseq expression";
-    private static final String DATA_SOURCE_NAME = "whoknows";
+    private static final String DATASET_TITLE = "RNA-seq expression";
+    private static final String DATA_SOURCE_NAME = "Araport";
 
     private static final Logger LOG = Logger.getLogger(RnaseqExpressionConverter.class);
     private static final int STUDIES_NR = 4;
@@ -52,15 +52,12 @@ public class RnaseqExpressionConverter extends BioFileConverter
      * Constructor
      * @param writer the ItemWriter used to handle the resultant items
      * @param model the Model
+     * @throws ObjectStoreException e
      */
-    public RnaseqExpressionConverter(ItemWriter writer, Model model) {
+    public RnaseqExpressionConverter(ItemWriter writer, Model model)
+        throws ObjectStoreException {
         super(writer, model, DATA_SOURCE_NAME, DATASET_TITLE);
-        try {
-            createOrganismItem();
-        } catch (ObjectStoreException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        createOrganismItem();
     }
 
     /**
@@ -106,8 +103,6 @@ public class RnaseqExpressionConverter extends BioFileConverter
         }
         String [] headers = null;
         int lineNumber = 0;
-
-//        studies = new HashMap<String, String>();
 
         while (tsvIter.hasNext()) {
             String[] line = (String[]) tsvIter.next();
