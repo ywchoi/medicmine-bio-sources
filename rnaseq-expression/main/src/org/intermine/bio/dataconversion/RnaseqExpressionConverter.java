@@ -48,6 +48,8 @@ public class RnaseqExpressionConverter extends BioFileConverter
     private Map<String, String> geneItems = new HashMap<String, String>();
     private Map<String, String> transcriptItems = new HashMap<String, String>();
 
+    private int totHeaders = 0;
+
     /**
      * Constructor
      * @param writer the ItemWriter used to handle the resultant items
@@ -66,16 +68,17 @@ public class RnaseqExpressionConverter extends BioFileConverter
      * {@inheritDoc}
      */
     public void process(Reader reader) throws Exception {
-        // There are two types of files:
-        // The following code works out which file we are reading
+        // Files can refer to genes or to transcripts.
+        // File name is expected to contains the relevant term.
+
         //studies = new HashMap<String, String>();
         File currentFile = getCurrentFile();
 
-        if ("4samples.gene".equals(currentFile.getName())) {
-            LOG.info("FILE 4 GENES");
+        if (currentFile.getName().contains("gene")) {
+            LOG.info("Loading RNAseq expressions for GENES");
             processFile(reader, "gene", org);
-        } else if ("4samples.transcript".equals(currentFile.getName())) {
-            LOG.info("FILE 4 TRANSCRIPTS");
+        } else if (currentFile.getName().contains("transcript")) {
+            LOG.info("Loading RNAseq expressions for TRANSCRIPTS");
             processFile(reader, "transcript", org);
         } else {
             throw new IllegalArgumentException("Unexpected file: "
@@ -107,7 +110,6 @@ public class RnaseqExpressionConverter extends BioFileConverter
         while (tsvIter.hasNext()) {
             String[] line = (String[]) tsvIter.next();
             LOG.debug("BIOENTITY " + line[0]);
-
             if (lineNumber == 0) {
                 // column headers - strip off any extra columns
                 int end = 0;
@@ -119,6 +121,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
                 }
                 headers = new String[end];
                 System.arraycopy(line, 0, headers, 0, end);
+                totHeaders = headers.length;
                 LOG.info("HHH " + headers.length + " end=" + end);
             } else {
                 String primaryId = line[0]; //Gene id
@@ -126,7 +129,6 @@ public class RnaseqExpressionConverter extends BioFileConverter
                 if (StringUtils.isEmpty(primaryId)) {
                     break;
                 }
-
                 if (type.equalsIgnoreCase("gene")) {
                     createBioEntity(primaryId, "Gene");
                 }
@@ -134,8 +136,8 @@ public class RnaseqExpressionConverter extends BioFileConverter
                     createBioEntity(primaryId, "Transcript");
                 }
 
-                // scores start from column 2 and end at STUDIES_NR +1 which is headers[1,SN]
-                for (int i = 1; i <= STUDIES_NR; i++) {
+                // scores start from column 2 and end at totHeaders which is headers[1,SampleNumber]
+                for (int i = 1; i < totHeaders; i++) {
                     String col = headers[i].replace("_TPM", "");
                     if (!studies.containsKey(col)) {
                         Item experiment = createExperiment(col);
