@@ -1,12 +1,8 @@
 <?xml version="1.0"?>
 <classes>
 
-<class name="Gene" is-interface="true">
-  <collection name="RNASeqExpressions" referenced-type="RnaseqExpression" reverse-reference="gene" />
-</class>
-
-<class name="Transcript" is-interface="true">
-  <collection name="RNASeqExpressions" referenced-type="RnaseqExpression" reverse-reference="transcript" />
+<class name="BioEntity" is-interface="true">
+  <collection name="RNASeqExpressions" referenced-type="RnaseqExpression" reverse-reference="expressionOf" />
 </class>
 
 <class name="Experiment" is-interface="true">
@@ -22,12 +18,40 @@
   <attribute name="score" type="java.lang.Double" />
   <attribute name="unit" type="java.lang.String" />
   <attribute name="type" type="java.lang.String" />
+  <reference name="expressionOf" referenced-type="BioEntity" reverse-reference="RNASeqExpressions" />
+  <reference name="experiment" referenced-type="Experiment" />
+  <reference name="dataSet" referenced-type="DataSet" />
+  <reference name="organism" referenced-type="Organism" />
+</class>
+
+<!--
+<class name="Gene" extends="BioEntity" is-interface="true">
+  <collection name="RNASeqExpressions" referenced-type="RnaseqExpression" reverse-reference="expressionOf" />
+</class>
+
+<class name="Transcript" extends="BioEntity" is-interface="true">
+  <collection name="RNASeqExpressions" referenced-type="RnaseqExpression" reverse-reference="expressionOf" />
+</class>
+
+<class name="RnaseqExpression" is-interface="true">
+  <attribute name="score" type="java.lang.Double" />
+  <attribute name="unit" type="java.lang.String" />
+  <attribute name="type" type="java.lang.String" />
   <reference name="gene" referenced-type="Gene" reverse-reference="RNASeqExpressions" />
   <reference name="transcript" referenced-type="Transcript" reverse-reference="RNASeqExpressions" />
   <reference name="experiment" referenced-type="Experiment" />
   <reference name="dataSet" referenced-type="DataSet" />
   <reference name="organism" referenced-type="Organism" />
 </class>
+
+<class name="GeneRnaseqExpression"  extends="RnaseqExpression" is-interface="true">
+  <reference name="gene" referenced-type="Gene" reverse-reference="RNASeqExpressions" />
+</class>
+
+<class name="TranscriptRnaseqExpression"  extends="RnaseqExpression" is-interface="true">
+  <reference name="transcript" referenced-type="Transcript" reverse-reference="RNASeqExpressions" />
+</class>
+-->
 
 <!--
     <class name="Sample" is-interface="true">

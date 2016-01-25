@@ -140,23 +140,20 @@ public class RnaseqExpressionConverter extends BioFileConverter
                     createBioEntity(primaryId, "Transcript");
                 }
                 if ("experiment".equalsIgnoreCase(type)) {
-//                    for (int i = 1; i < totHeaders; i++) {
-                        // file has the format
-                        // SRA accession Category Sample Description
-                        // in our model
-                        // SRA accession, category, title
+                    // file has the format
+                    // SRA accession Category Sample Description
+                    // in our model
+                    // SRA accession, category, title
 
-                        currentExp = new String[totHeaders];
-                        System.arraycopy(line, 0, currentExp, 0, totHeaders);
-//                        totHeaders = headers.length;
-                        LOG.info("EEE " + currentExp[0] + ": " + currentExp[1]);
+                    currentExp = new String[totHeaders];
+                    System.arraycopy(line, 0, currentExp, 0, totHeaders);
+                    LOG.info("EEE " + currentExp[0] + ": " + currentExp[1]);
 
-                        String expId = currentExp[0];
-                        if (!experiments.containsKey(expId)) {
-                            Item experiment = createExperiment(expId, currentExp[1], currentExp[2]);
-                            experiments.put(expId, experiment.getIdentifier());
-                        }
-                    //}
+                    String expId = currentExp[0];
+                    if (!experiments.containsKey(expId)) {
+                        Item experiment = createExperiment(expId, currentExp[1], currentExp[2]);
+                        experiments.put(expId, experiment.getIdentifier());
+                    }
                     continue; // experiment file: no info on bioentity
                 }
                 // scores start from column 2 and end at totHeaders which is headers[1,SampleNumber]
@@ -168,11 +165,17 @@ public class RnaseqExpressionConverter extends BioFileConverter
                     }
                     Item score = createRNASeqExpression(line[i], type);
                     if (type.equalsIgnoreCase("gene")) {
-                        score.setReference("gene", geneItems.get(primaryId));
+                        score.setReference("expressionOf", geneItems.get(primaryId));
                     }
                     if (type.equalsIgnoreCase("transcript")) {
-                        score.setReference("transcript", transcriptItems.get(primaryId));
+                        score.setReference("expressionOf", transcriptItems.get(primaryId));
                     }
+//                    if (type.equalsIgnoreCase("gene")) {
+//                        score.setReference("gene", geneItems.get(primaryId));
+//                    }
+//                    if (type.equalsIgnoreCase("transcript")) {
+//                        score.setReference("transcript", transcriptItems.get(primaryId));
+//                    }
                     score.setReference("experiment", experiments.get(col));
                     score.setReference("organism", organism);
                     store(score);
