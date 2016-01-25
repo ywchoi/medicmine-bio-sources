@@ -40,11 +40,11 @@ public class RnaseqExpressionConverter extends BioFileConverter
     private static final String DATA_SOURCE_NAME = "Araport";
 
     private static final Logger LOG = Logger.getLogger(RnaseqExpressionConverter.class);
-    private static final int STUDIES_NR = 4;
     private static final String CATEGORY = "RNA-Seq";
+    private static final String TPM = "TPM";
     private Item org;
 
-    private Map<String, String> studies = new HashMap<String, String>();
+    private Map<String, String> experiments = new HashMap<String, String>();
     private Map<String, String> geneItems = new HashMap<String, String>();
     private Map<String, String> transcriptItems = new HashMap<String, String>();
 
@@ -80,6 +80,9 @@ public class RnaseqExpressionConverter extends BioFileConverter
         } else if (currentFile.getName().contains("transcript")) {
             LOG.info("Loading RNAseq expressions for TRANSCRIPTS");
             processFile(reader, "transcript", org);
+        } else if (currentFile.getName().contains("experiment")) {
+            LOG.info("Loading RNAseq expressions METADATA");
+            processFile(reader, "experiment", org);
         } else {
             throw new IllegalArgumentException("Unexpected file: "
                     + currentFile.getName());
@@ -105,6 +108,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
             throw new BuildException("cannot parse file: " + getCurrentFile(), e);
         }
         String [] headers = null;
+        String [] currentExp = null;
         int lineNumber = 0;
 
         while (tsvIter.hasNext()) {
@@ -129,19 +133,38 @@ public class RnaseqExpressionConverter extends BioFileConverter
                 if (StringUtils.isEmpty(primaryId)) {
                     break;
                 }
-                if (type.equalsIgnoreCase("gene")) {
+                if ("gene".equalsIgnoreCase(type)) {
                     createBioEntity(primaryId, "Gene");
                 }
-                if (type.equalsIgnoreCase("transcript")) {
+                if ("transcript".equalsIgnoreCase(type)) {
                     createBioEntity(primaryId, "Transcript");
                 }
+                if ("experiment".equalsIgnoreCase(type)) {
+//                    for (int i = 1; i < totHeaders; i++) {
+                        // file has the format
+                        // SRA accession Category Sample Description
+                        // in our model
+                        // SRA accession, category, title
 
+                        currentExp = new String[totHeaders];
+                        System.arraycopy(line, 0, currentExp, 0, totHeaders);
+//                        totHeaders = headers.length;
+                        LOG.info("EEE " + currentExp[0] + ": " + currentExp[1]);
+
+                        String expId = currentExp[0];
+                        if (!experiments.containsKey(expId)) {
+                            Item experiment = createExperiment(expId, currentExp[1], currentExp[2]);
+                            experiments.put(expId, experiment.getIdentifier());
+                        }
+                    //}
+                    continue; // experiment file: no info on bioentity
+                }
                 // scores start from column 2 and end at totHeaders which is headers[1,SampleNumber]
                 for (int i = 1; i < totHeaders; i++) {
                     String col = headers[i].replace("_TPM", "");
-                    if (!studies.containsKey(col)) {
+                    if (!experiments.containsKey(col)) {
                         Item experiment = createExperiment(col);
-                        studies.put(col, experiment.getIdentifier());
+                        experiments.put(col, experiment.getIdentifier());
                     }
                     Item score = createRNASeqExpression(line[i], type);
                     if (type.equalsIgnoreCase("gene")) {
@@ -150,7 +173,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
                     if (type.equalsIgnoreCase("transcript")) {
                         score.setReference("transcript", transcriptItems.get(primaryId));
                     }
-                    score.setReference("study", studies.get(col));
+                    score.setReference("experiment", experiments.get(col));
                     score.setReference("organism", organism);
                     store(score);
                 }
@@ -168,7 +191,8 @@ public class RnaseqExpressionConverter extends BioFileConverter
      */
     private Item createRNASeqExpression(String score, String type) throws ObjectStoreException {
         Item expression = createItem("RnaseqExpression");
-        expression.setAttribute("TPM", score);
+        expression.setAttribute("score", score);
+        expression.setAttribute("unit", TPM);
         expression.setAttribute("type", type);
         return expression;
     }
@@ -214,8 +238,10 @@ public class RnaseqExpressionConverter extends BioFileConverter
     /**
      * Create and store an Experiment item on the first time called.
      *
+     * used if an experiment has not been previously found in the metadata (experiment) file
+     *
      * @param name the cell line name
-     * @return an Item representing the CellLine
+     * @return an Item representing the Experiment
      */
     private Item createExperiment(String name) throws ObjectStoreException {
         LOG.info("EXPE: " + name);
@@ -225,6 +251,26 @@ public class RnaseqExpressionConverter extends BioFileConverter
         store(e);
         return e;
     }
+
+    /**
+     * Create and store an Experiment item on the first time called.
+     *
+     * @param name the cell line name
+     * @param category the tissue/organ
+     * @param title the title of the experiment
+     * @return an Item representing the Expreriment
+     */
+    private Item createExperiment(String name, String category, String title)
+        throws ObjectStoreException {
+        LOG.info("EXPE: " + name);
+        Item e = createItem("Experiment");
+        e.setAttribute("SRAaccession", name);
+        e.setAttribute("category", category);
+        e.setAttribute("title", title);
+        store(e);
+        return e;
+    }
+
 
 }
 
