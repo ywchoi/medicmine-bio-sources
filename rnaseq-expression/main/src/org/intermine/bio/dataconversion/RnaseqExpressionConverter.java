@@ -34,22 +34,26 @@ import org.intermine.xml.full.Item;
  */
 public class RnaseqExpressionConverter extends BioFileConverter
 {
-    // TODO get those from project file
+    // TODO get those from project file?
     private static final String TAX_ID = "3702";
     private static final String DATASET_TITLE = "RNA-seq expression";
-    private static final String DATA_SOURCE_NAME = "Araport";
+    private static final String DATASOURCE_NAME = "Araport";
+
+    private static final String EXP_DATASET = "SRA";
+    private static final String EXP_DATASOURCE = "NCBI";
 
     private static final Logger LOG = Logger.getLogger(RnaseqExpressionConverter.class);
     private static final String CATEGORY = "RNA-Seq";
     private static final String TPM = "TPM";
-    private Item org;
 
+    private Item org;
     private Map<String, String> experiments = new HashMap<String, String>();
     private Map<String, String> geneItems = new HashMap<String, String>();
     private Map<String, String> transcriptItems = new HashMap<String, String>();
 
     private int totHeaders = 0;
 
+    private String dataSetRef = null;
     /**
      * Constructor
      * @param writer the ItemWriter used to handle the resultant items
@@ -58,8 +62,9 @@ public class RnaseqExpressionConverter extends BioFileConverter
      */
     public RnaseqExpressionConverter(ItemWriter writer, Model model)
         throws ObjectStoreException {
-        super(writer, model, DATA_SOURCE_NAME, DATASET_TITLE);
+        super(writer, model, DATASOURCE_NAME, DATASET_TITLE);
         createOrganismItem();
+        createDataSource();
     }
 
     /**
@@ -70,10 +75,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
     public void process(Reader reader) throws Exception {
         // Files can refer to genes or to transcripts.
         // File name is expected to contains the relevant term.
-
-        //studies = new HashMap<String, String>();
         File currentFile = getCurrentFile();
-
         if (currentFile.getName().contains("gene")) {
             LOG.info("Loading RNAseq expressions for GENES");
             processFile(reader, "gene", org);
@@ -134,10 +136,10 @@ public class RnaseqExpressionConverter extends BioFileConverter
                     break;
                 }
                 if ("gene".equalsIgnoreCase(type)) {
-                    createBioEntity(primaryId, "Gene");
+                    createFeature(primaryId, "Gene");
                 }
                 if ("transcript".equalsIgnoreCase(type)) {
-                    createBioEntity(primaryId, "Transcript");
+                    createFeature(primaryId, "Transcript");
                 }
                 if ("experiment".equalsIgnoreCase(type)) {
                     // file has the format
@@ -170,12 +172,6 @@ public class RnaseqExpressionConverter extends BioFileConverter
                     if (type.equalsIgnoreCase("transcript")) {
                         score.setReference("expressionOf", transcriptItems.get(primaryId));
                     }
-//                    if (type.equalsIgnoreCase("gene")) {
-//                        score.setReference("gene", geneItems.get(primaryId));
-//                    }
-//                    if (type.equalsIgnoreCase("transcript")) {
-//                        score.setReference("transcript", transcriptItems.get(primaryId));
-//                    }
                     score.setReference("experiment", experiments.get(col));
                     score.setReference("organism", organism);
                     store(score);
@@ -207,22 +203,22 @@ public class RnaseqExpressionConverter extends BioFileConverter
      * @param type gene or transcript
      * @throws ObjectStoreException
      */
-    private void createBioEntity(String primaryId, String type) throws ObjectStoreException {
-        Item bioentity = null;
+    private void createFeature(String primaryId, String type) throws ObjectStoreException {
+        Item feature = null;
         LOG.debug("BIO: " + type + " -- " + primaryId);
         if ("Gene".equals(type)) {
             if (!geneItems.containsKey(primaryId)) {
-                bioentity = createItem("Gene");
-                bioentity.setAttribute("primaryIdentifier", primaryId);
-                store(bioentity);
-                geneItems.put(primaryId, bioentity.getIdentifier());
+                feature = createItem("Gene");
+                feature.setAttribute("primaryIdentifier", primaryId);
+                store(feature);
+                geneItems.put(primaryId, feature.getIdentifier());
             }
         } else if ("Transcript".equals(type)) {
             if (!transcriptItems.containsKey(primaryId)) {
-                bioentity = createItem("Transcript");
-                bioentity.setAttribute("primaryIdentifier", primaryId);
-                store(bioentity);
-                transcriptItems.put(primaryId, bioentity.getIdentifier());
+                feature = createItem("Transcript");
+                feature.setAttribute("primaryIdentifier", primaryId);
+                store(feature);
+                transcriptItems.put(primaryId, feature.getIdentifier());
             }
         }
     }
@@ -251,6 +247,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
         Item e = createItem("Experiment");
         e.setAttribute("SRAaccession", name);
         e.setAttribute("category", CATEGORY);
+        e.setReference("dataSet", dataSetRef);
         store(e);
         return e;
     }
@@ -270,8 +267,27 @@ public class RnaseqExpressionConverter extends BioFileConverter
         e.setAttribute("SRAaccession", name);
         e.setAttribute("category", category);
         e.setAttribute("title", title);
+        e.setReference("dataSet", dataSetRef);
         store(e);
         return e;
+    }
+
+    /**
+     * create the experiments datasource and dataset
+     *
+     */
+    private void createDataSource() throws ObjectStoreException {
+
+        Item dataSource = createItem("DataSource");
+        dataSource.setAttribute("name", EXP_DATASOURCE);
+        store(dataSource);
+
+        Item dataSet = createItem("DataSet");
+        dataSet.setAttribute("name", EXP_DATASET);
+        dataSet.setReference("dataSource", dataSource.getIdentifier());
+        store(dataSet);
+
+        dataSetRef = dataSet.getIdentifier(); // used in experiment
     }
 
 
