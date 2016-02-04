@@ -5,6 +5,9 @@
   <collection name="RNASeqExpressions" referenced-type="RnaseqExpression" reverse-reference="expressionOf" />
 </class>
 
+<class name="Experiment" is-interface="true">
+</class>
+
 <class name="RnaseqExperiment" extends="Experiment" is-interface="true">
   <attribute name="description" type="java.lang.String" />
   <attribute name="tissue" type="java.lang.String" />
