@@ -72,6 +72,9 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
 
     private Map<String, DataSet> dataSets = new HashMap<String, DataSet>();
 
+    // md5Checksum -> sequence item  (ensure all sequences are unique)
+    private Map<String, org.intermine.model.bio.Sequence> allSequences = new HashMap<String, org.intermine.model.bio.Sequence>();
+
     /**
      * Set the Taxon Id of the Organism we are loading.  Can be space delimited list of taxonIds
      * @param fastaTaxonId the taxon id to set.
@@ -267,14 +270,29 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
         if (organism == null) {
             return;
         }
-        org.intermine.model.bio.Sequence flymineSequence = getDirectDataLoader().createObject(
-                org.intermine.model.bio.Sequence.class);
 
         String sequence = bioJavaSequence.seqString();
         String md5checksum = Util.getMd5checksum(sequence);
-        flymineSequence.setResidues(new PendingClob(sequence));
-        flymineSequence.setLength(bioJavaSequence.length());
-        flymineSequence.setMd5checksum(md5checksum);
+
+        if (!allSequences.containsKey(md5checksum)) {
+            org.intermine.model.bio.Sequence flymineSequence = getDirectDataLoader().createObject(
+                    org.intermine.model.bio.Sequence.class);
+
+            flymineSequence.setResidues(new PendingClob(sequence));
+            flymineSequence.setLength(bioJavaSequence.length());
+            flymineSequence.setMd5checksum(md5checksum);
+
+            try {
+                getDirectDataLoader().store(flymineSequence);
+                storeCount += 1;
+            } catch (ObjectStoreException e) {
+                throw new BuildException("sequence store failed", e);
+            }
+            allSequences.put(md5checksum, flymineSequence);
+        }
+
+        org.intermine.model.bio.Sequence flymineSequence = allSequences.get(md5checksum);
+
         Class<? extends InterMineObject> imClass;
         Class<?> c;
         try {
@@ -330,11 +348,10 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
         imo.addDataSets(dataSet);
 
         try {
-            getDirectDataLoader().store(flymineSequence);
             getDirectDataLoader().store(imo);
-            storeCount += 2;
+            storeCount += 1;
         } catch (ObjectStoreException e) {
-            throw new BuildException("store failed", e);
+            throw new BuildException("imo store failed", e);
         }
     }
 
