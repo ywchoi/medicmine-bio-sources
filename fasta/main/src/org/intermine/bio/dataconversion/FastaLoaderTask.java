@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Iterator;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -33,10 +34,21 @@ import org.intermine.model.bio.BioEntity;
 import org.intermine.model.bio.DataSet;
 import org.intermine.model.bio.DataSource;
 import org.intermine.model.bio.Organism;
+import org.intermine.objectstore.ObjectStore;
 import org.intermine.objectstore.ObjectStoreException;
 import org.intermine.objectstore.query.PendingClob;
 import org.intermine.task.FileDirectDataLoaderTask;
 import org.intermine.metadata.Util;
+import org.intermine.metadata.Model;
+import org.intermine.metadata.ConstraintOp;
+
+import org.intermine.objectstore.query.Query;
+import org.intermine.objectstore.query.QueryClass;
+import org.intermine.objectstore.query.QueryField;
+import org.intermine.objectstore.query.QueryValue;
+import org.intermine.objectstore.query.Results;
+import org.intermine.objectstore.query.ResultsRow;
+import org.intermine.objectstore.query.SimpleConstraint;
 
 /**
  * A task that can read a set of FASTA files and create the corresponding Sequence objects in an
@@ -52,6 +64,7 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
 
     private String sequenceType = "dna";
     private String classAttribute = "primaryIdentifier";
+    private boolean skipIfProteinLoaded = false;
     private Organism org;
     private String className;
     private int storeCount = 0;
@@ -72,9 +85,6 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
 
     private Map<String, DataSet> dataSets = new HashMap<String, DataSet>();
 
-    // md5Checksum -> sequence item  (ensure all sequences are unique)
-    private Map<String, org.intermine.model.bio.Sequence> allSequences = new HashMap<String, org.intermine.model.bio.Sequence>();
-
     /**
      * Set the Taxon Id of the Organism we are loading.  Can be space delimited list of taxonIds
      * @param fastaTaxonId the taxon id to set.
@@ -93,6 +103,19 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
             this.sequenceType = "dna";
         } else {
             this.sequenceType = sequenceType;
+        }
+    }
+
+    /**
+     * Set the flag to skip loading Protein FASTA record if it's a duplicate of an already
+     * loaded protein entity (check for duplicate using md5checksum)
+     * @param skipIfProteinLoaded boolean
+     */
+    public void setSkipIfProteinLoaded(String skipIfProteinLoaded) {
+        if ("true".equalsIgnoreCase(skipIfProteinLoaded)) {
+            this.skipIfProteinLoaded = true;
+        } else {
+            this.skipIfProteinLoaded = false;
         }
     }
 
@@ -270,29 +293,26 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
         if (organism == null) {
             return;
         }
+        org.intermine.model.bio.Sequence flymineSequence = getDirectDataLoader().createObject(
+                org.intermine.model.bio.Sequence.class);
 
         String sequence = bioJavaSequence.seqString();
         String md5checksum = Util.getMd5checksum(sequence);
 
-        if (!allSequences.containsKey(md5checksum)) {
-            org.intermine.model.bio.Sequence flymineSequence = getDirectDataLoader().createObject(
-                    org.intermine.model.bio.Sequence.class);
+        // if boolean skipIfProteinLoaded == true, check if md5checksum of FASTA in the
+        // current data set is already loaded by a previous data source/set
+        if (skipIfProteinLoaded) {
+            ObjectStore os = getIntegrationWriter().getObjectStore();
+            Model model = os.getModel();
 
-            flymineSequence.setResidues(new PendingClob(sequence));
-            flymineSequence.setLength(bioJavaSequence.length());
-            flymineSequence.setMd5checksum(md5checksum);
-
-            try {
-                getDirectDataLoader().store(flymineSequence);
-                storeCount += 1;
-            } catch (ObjectStoreException e) {
-                throw new BuildException("sequence store failed", e);
+            if (className.endsWith("Protein") && isProteinLoaded(md5checksum, os, model)) {
+                return;
             }
-            allSequences.put(md5checksum, flymineSequence);
         }
 
-        org.intermine.model.bio.Sequence flymineSequence = allSequences.get(md5checksum);
-
+        flymineSequence.setResidues(new PendingClob(sequence));
+        flymineSequence.setLength(bioJavaSequence.length());
+        flymineSequence.setMd5checksum(md5checksum);
         Class<? extends InterMineObject> imClass;
         Class<?> c;
         try {
@@ -348,10 +368,11 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
         imo.addDataSets(dataSet);
 
         try {
+            getDirectDataLoader().store(flymineSequence);
             getDirectDataLoader().store(imo);
-            storeCount += 1;
+            storeCount += 2;
         } catch (ObjectStoreException e) {
-            throw new BuildException("imo store failed", e);
+            throw new BuildException("store failed", e);
         }
     }
 
@@ -452,5 +473,29 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
             taxonIds.put(name, taxonId);
         }
     }
+
+    /**
+     * based on md5checksum, check if protein already loaded by different source
+     * if true, skip loading Protein entity from the current FASTA source
+     */
+    private boolean isProteinLoaded(String md5checksum, ObjectStore os, Model model) {
+        Query query = new Query();
+        QueryClass queryClass = new QueryClass(model.getClassDescriptorByName("Protein").getType());
+        query.addFrom(queryClass);
+        query.addToSelect(queryClass);
+        query.setConstraint(new SimpleConstraint(new QueryField(queryClass, "md5checksum"),
+                    ConstraintOp.EQUALS, new QueryValue(md5checksum)));
+
+        Results resultSet = os.execute(query);
+        Iterator<ResultsRow> iterator = ((Iterator) resultSet.iterator());
+        while(iterator.hasNext()) {
+            ResultsRow<?> item = (ResultsRow<?>) iterator.next();
+            if (item.get(0) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
 

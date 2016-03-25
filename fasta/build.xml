@@ -5,12 +5,12 @@
 -->
 <project name="fasta" default="default" basedir=".">
   <description>build, test, package fasta</description>
-  
+
   <import file="../../../imbuild/source.xml"/>
-  
+
   <!-- no retrieve -->
   <target name="retrieve"/>
-  
+
   <target name="-init-suffix" unless="fasta.idSuffix">
     <!-- set the default -->
     <property name="fasta.idSuffix" value=""/>
@@ -20,7 +20,7 @@
     <!-- set the default -->
     <property name="fasta.classAttribute" value="primaryIdentifier"/>
   </target>
- 
+
   <target name="-init-loader-classname" unless="fasta.loaderClassName">
     <!-- set the default -->
     <property name="fasta.loaderClassName"
@@ -41,10 +41,11 @@
                 dataSetTitle="${fasta.dataSetTitle}"
                 dataSourceName="${fasta.dataSourceName}"
                 sequenceType="${fasta.sequenceType}"
+                skipIfProteinLoaded="${fasta.skipIfProteinLoaded}"
                 fastaTaxonId="${fasta.taxonId}">
       <fileset dir="${src.data.dir}" includes="${fasta.includes}"/>
     </read-fasta>
   </target>
-  
+
 </project>
 
