@@ -73,8 +73,17 @@ public class RnaseqExpressionConverter extends BioFileConverter
      * {@inheritDoc}
      */
     public void process(Reader reader) throws Exception {
-        // Files can refer to genes or to transcripts.
-        // File name is expected to contains the relevant term.
+        //
+        // Files can refer to genes, transcripts or experiments.
+        // File name is expected to contains the relevant term
+        // and to be in the same format, i.e.
+        // [prefix]RNAseq-expression[sep]{type}[suffix]
+        // where all [] are optional and fixed and {type} = {experiment, gene, transcript}
+        // e.g.:
+        // 113.RNAseq-expression.gene.tsv
+        //
+        // TODO: impose order(e/g/t) here?
+        //
         File currentFile = getCurrentFile();
         if (currentFile.getName().contains("gene")) {
             LOG.info("Loading RNAseq expressions for GENES");
@@ -128,7 +137,6 @@ public class RnaseqExpressionConverter extends BioFileConverter
                 headers = new String[end];
                 System.arraycopy(line, 0, headers, 0, end);
                 totHeaders = headers.length;
-                LOG.info("HHH " + headers.length + " end=" + end);
             } else {
                 String primaryId = line[0]; //Gene id
                 // if empty lines at the end of the file
@@ -243,7 +251,9 @@ public class RnaseqExpressionConverter extends BioFileConverter
      * @return an Item representing the Experiment
      */
     private Item createExperiment(String name) throws ObjectStoreException {
-        LOG.info("EXPE: " + name);
+        LOG.warn("EXPERIMENT " + name
+                + " missing tissue information: should you check the consistency of naming "
+                + "for your data files?");
         Item e = createItem("RnaseqExperiment");
         e.setAttribute("SRAaccession", name);
         e.setAttribute("category", CATEGORY);
@@ -262,7 +272,7 @@ public class RnaseqExpressionConverter extends BioFileConverter
      */
     private Item createExperiment(String name, String tissue, String description)
         throws ObjectStoreException {
-        LOG.info("EXPE: " + name);
+        LOG.debug("EXPE: " + name);
         Item e = createItem("RnaseqExperiment");
         e.setAttribute("SRAaccession", name);
         e.setAttribute("tissue", tissue);
