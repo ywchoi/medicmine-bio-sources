@@ -47,9 +47,10 @@ public class GenerifConverter extends BioFileConverter
      * Constructor
      * @param writer the ItemWriter used to handle the resultant items
      * @param model the Model
+     * @throws ObjectStoreException if problems..
      */
     public GenerifConverter(ItemWriter writer, Model model)
-            throws ObjectStoreException {
+        throws ObjectStoreException {
         super(writer, model, DATA_SOURCE_NAME, DATASET_TITLE);
         createOrganismItem();
     }
@@ -90,7 +91,7 @@ public class GenerifConverter extends BioFileConverter
      *
      */
     private void processFile(Reader reader, Item organism)
-            throws IOException, ObjectStoreException {
+        throws IOException, ObjectStoreException {
         Iterator<?> tsvIter;
         try {
             tsvIter = FormattedTextParser.parseTabDelimitedReader(reader);
@@ -100,7 +101,6 @@ public class GenerifConverter extends BioFileConverter
         IdResolver athResolver = IdResolverService.getIdResolverByOrganism("3702");
         String pid = null;
 
-        String [] headers = null;
         int lineNumber = 0;
 
         while (tsvIter.hasNext()) {
@@ -172,7 +172,6 @@ public class GenerifConverter extends BioFileConverter
         }
         headers = new String[end];
         System.arraycopy(line, 0, headers, 0, end);
-        LOG.info("WW header lenght " + headers.length);
     }
 
 
