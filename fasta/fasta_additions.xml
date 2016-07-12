@@ -1,3 +1,6 @@
 <?xml version="1.0"?>
 <classes>
+    <class name="Protein" is-interface="true">
+        <collection name="mRNA" referenced-type="MRNA" />
+    </class>
 </classes>
