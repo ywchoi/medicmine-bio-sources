@@ -1,0 +1,4 @@
+<project name="medicago-ortho-tasks" default="default" basedir=".">
+  <description>build medicago-ortho tasks</description>
+  <import file="../../../../imbuild/library.xml"/> 
+</project>
