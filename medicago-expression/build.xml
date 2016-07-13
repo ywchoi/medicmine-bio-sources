@@ -1,0 +1,5 @@
+<project name="medicago-expression" default="default" basedir=".">
+  <description>build, test, package medicago-expression</description>
+  
+  <import file="../../../imbuild/source.xml"/>
+</project>

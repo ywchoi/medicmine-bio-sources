@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<classes>
+  <class name="Transcript" is-interface="true">
+     <collection name="rnaSeqResults" referenced-type="RNASeqResult" 
+reverse-reference="transcript"/>
+  </class>
+  <class name="RNASeqResult" is-interface="true">
+    <attribute name="expressionLevel" type="java.lang.String"/>
+    <attribute name="expressionScore" type="java.lang.String"/>
+    <attribute name="stage" type="java.lang.String"/>
+    <reference name="transcript" referenced-type="Transcript" 
+reverse-reference="rnaSeqResults"/>
+  </class>
+</classes>
