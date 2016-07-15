@@ -67,6 +67,7 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
     private String sequenceType = "dna";
     private String classAttribute = "primaryIdentifier";
     private boolean skipIfProteinLoaded = false;
+    private boolean trimProteinStopCodon = false;
     private Organism org;
     private String className;
     private int storeCount = 0;
@@ -119,6 +120,18 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
             this.skipIfProteinLoaded = true;
         } else {
             this.skipIfProteinLoaded = false;
+        }
+    }
+
+    /**
+     * Set the flag to trim stop-codon (asterisk, *) from Protein FASTA record
+     * @param trimProteinStopCodon boolean
+     */
+    public void setTrimProteinStopCodon(String trimProteinStopCodon) {
+        if ("true".equalsIgnoreCase(trimProteinStopCodon)) {
+            this.trimProteinStopCodon = true;
+        } else {
+            this.trimProteinStopCodon = false;
         }
     }
 
@@ -308,8 +321,15 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
                 org.intermine.model.bio.Sequence.class);
 
         String sequence = bioJavaSequence.seqString();
-        String md5checksum = Util.getMd5checksum(sequence);
+        // if boolean trimProteinStopCodon == true, check if Protein FASTA sequence
+        // ends with an asterisk (*). If true, trim off the stop codon
+        if (trimProteinStopCodon) {
+            if (className.endsWith("Protein") && sequence != null && sequence.endsWith("*")) {
+                sequence = sequence.substring(0, sequence.length() - 1);
+            }
+        }
 
+        String md5checksum = Util.getMd5checksum(sequence);
         // if boolean skipIfProteinLoaded == true, check if md5checksum of FASTA in the
         // current data set is already loaded by a previous data source/set
         if (skipIfProteinLoaded) {
@@ -319,7 +339,7 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
         }
 
         flymineSequence.setResidues(new PendingClob(sequence));
-        flymineSequence.setLength(bioJavaSequence.length());
+        flymineSequence.setLength(sequence.length());
         flymineSequence.setMd5checksum(md5checksum);
         Class<? extends InterMineObject> imClass;
         Class<?> c;
