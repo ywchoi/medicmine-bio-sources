@@ -10,8 +10,10 @@ package org.intermine.bio.dataconversion;
  *
  */
 
+import java.util.Map;
 import java.util.List;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.regex.Matcher;
@@ -30,6 +32,8 @@ import org.intermine.xml.full.Item;
 public class MedicagoGffGFF3RecordHandler extends GFF3RecordHandler
 {
 
+    private final Map<String, Item> protIdMap = new HashMap<String, Item>();
+
     /**
      * Create a new MedicagoGffGFF3RecordHandler for the given data model.
      * @param model the model for which items will be created
@@ -40,6 +44,7 @@ public class MedicagoGffGFF3RecordHandler extends GFF3RecordHandler
         refsAndCollections.put("Exon", "transcripts");
         refsAndCollections.put("FivePrimeUTR", "mRNAs");
         refsAndCollections.put("ThreePrimeUTR", "mRNAs");
+        refsAndCollections.put("TRNA", "gene");
     }
 
     /**
@@ -90,6 +95,22 @@ public class MedicagoGffGFF3RecordHandler extends GFF3RecordHandler
                         if (ref.startsWith("locus:")) {
                             String locus_tag = ref.substring(colonIndex + 1);
                             feature.setAttribute("secondaryIdentifier", locus_tag);
+                        } else if (ref.startsWith("UniProt:")) {
+                            String uniprotAcc = ref.substring(colonIndex + 1);
+
+                            Item proteinItem;
+                            if (protIdMap.containsKey(uniprotAcc)) {
+                                proteinItem = protIdMap.get(uniprotAcc);
+                            } else {
+                                proteinItem = converter.createItem("Protein");
+                                proteinItem.setAttribute("primaryAccession", uniprotAcc);
+                                proteinItem.setReference("organism", getOrganism());
+                                addItem(proteinItem);
+
+                                protIdMap.put(uniprotAcc, proteinItem);
+                            }
+                            feature.setReference("protein", proteinItem);
+
                         } else {
                             throw new RuntimeException("unknown external reference type: " + ref);
                         }
