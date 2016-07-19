@@ -35,8 +35,8 @@ import org.apache.tools.ant.BuildException;
 public class MedicagoExpressionConverter extends BioFileConverter
 {
     //
-    private static final String DATASET_TITLE = "Medicago truncatula Mt4.0 expression data";
-    private static final String DATA_SOURCE_NAME = "FPKM calculated using Cufflinks";
+    private static final String DATASET_TITLE = "RNA-seq expression";
+    private static final String DATA_SOURCE_NAME = "MTGD";
     private static final Logger LOG = Logger.getLogger(MedicagoExpressionConverter.class);
     private Item organism;
     private static final String TAXON_ID = "3880";

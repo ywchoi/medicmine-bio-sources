@@ -42,8 +42,8 @@ public class MedicagoOrthoConverter extends BioFileConverter
 {
     private Properties props = new Properties();
     private static final String PROP_FILE = "medicago-ortho_config.properties";
-    private static final String DATASET_TITLE = "Custom JCVI Reciprocal BLASTP Analysis";
-    private static final String DATA_SOURCE_NAME = "MedicagoOrtho";
+    private static final String DATASET_TITLE = "Medicago orthologs";
+    private static final String DATA_SOURCE_NAME = "MTGD";
     private static final Logger LOG = Logger.getLogger(MedicagoOrthoConverter.class);
     private Set<String> taxonIds = new HashSet<String>();
     private Set<String> homologues = new HashSet<String>();
