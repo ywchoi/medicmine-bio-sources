@@ -3,7 +3,7 @@
 
 <classes>
 <!-- add any <class> elements here -->
-  <class name="Gene" is-interface="true">
+  <class name="Gene" extends="SequenceFeature" is-interface="true">
       <attribute name="probesetIdentifier" type="java.lang.String"/>
   </class>
   <class name="Transcript" extends="SequenceFeature" is-interface="true">
