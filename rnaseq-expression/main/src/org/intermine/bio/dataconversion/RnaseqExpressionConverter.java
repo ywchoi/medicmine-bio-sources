@@ -35,16 +35,16 @@ import org.intermine.xml.full.Item;
 public class RnaseqExpressionConverter extends BioFileConverter
 {
     // TODO get those from project file?
-    private static final String TAX_ID = "3702";
+    private static final String TAX_ID = "3880";
     private static final String DATASET_TITLE = "RNA-seq expression";
-    private static final String DATASOURCE_NAME = "Araport";
+    private static final String DATASOURCE_NAME = "MTGD";
 
     private static final String EXP_DATASET = "SRA";
     private static final String EXP_DATASOURCE = "NCBI";
 
     private static final Logger LOG = Logger.getLogger(RnaseqExpressionConverter.class);
     private static final String CATEGORY = "RNA-Seq";
-    private static final String TPM = "TPM";
+    private static final String TPM = "FPKM";
 
     private Item org;
     private Map<String, String> experiments = new HashMap<String, String>();
