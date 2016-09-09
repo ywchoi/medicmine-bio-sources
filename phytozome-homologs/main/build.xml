@@ -1,0 +1,4 @@
+<project name="phytozome-homologs-tasks" default="default" basedir=".">
+  <description>build phytozome-homologs tasks</description>
+  <import file="../../../../imbuild/library.xml"/> 
+</project>
