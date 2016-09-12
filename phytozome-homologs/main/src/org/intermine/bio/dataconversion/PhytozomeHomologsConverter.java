@@ -40,7 +40,7 @@ public class PhytozomeHomologsConverter extends BioFileConverter
 {
     private Properties props = new Properties();
     private static final String PROP_FILE = "phytozome-homologs_config.properties";
-    private static final String DATASET_TITLE = "Phytozome Homologs data set";
+    private static final String DATASET_TITLE = "Phytozome Homologs";
     private static final String DATA_SOURCE_NAME = "Phytozome";
     private static final Logger LOG = Logger.getLogger(PhytozomeHomologsConverter.class);
     private Set<String> taxonIds = new HashSet<String>();
