@@ -1,0 +1,4 @@
+<project name="mtgi-gene-mapping-tasks" default="default" basedir=".">
+  <description>build mtgi-gene-mapping tasks</description>
+  <import file="../../../../../imbuild/library.xml"/> 
+</project>
