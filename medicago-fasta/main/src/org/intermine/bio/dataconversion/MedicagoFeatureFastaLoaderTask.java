@@ -24,8 +24,9 @@ import org.intermine.model.bio.SequenceFeature;
 import org.intermine.objectstore.ObjectStoreException;
 
 /**
- * Code for loading fasta for thalemine, setting feature attribute from the FASTA header.
+ * Code for loading fasta for MedicMine, setting feature attribute from the FASTA header.
  * @author Kim Rutherford
+ * @author Vivek Krishnakumar
  */
 public class MedicagoFeatureFastaLoaderTask extends FastaLoaderTask
 {

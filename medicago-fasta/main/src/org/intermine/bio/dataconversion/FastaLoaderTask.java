@@ -58,6 +58,7 @@ import org.intermine.objectstore.query.SimpleConstraint;
  *
  * @author Kim Rutherford
  * @author Peter Mclaren
+ * @author Vivek Krishnakumar
  */
 
 public class FastaLoaderTask extends FileDirectDataLoaderTask

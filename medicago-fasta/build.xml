@@ -3,10 +3,10 @@
   and deals with model objects (and therefore the "main" sub-project depends on
   the production model).
 -->
-<project name="fasta" default="default" basedir=".">
-  <description>build, test, package fasta</description>
+<project name="medicago-fasta" default="default" basedir=".">
+  <description>build, test, package medicago-fasta</description>
 
-  <import file="../../../imbuild/source.xml"/>
+  <import file="../../../../imbuild/source.xml"/>
 
   <!-- no retrieve -->
   <target name="retrieve"/>

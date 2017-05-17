@@ -32,6 +32,7 @@ import org.intermine.util.DynamicUtil;
  * A fasta loader that understand the headers of Medicago fasta Protein fasta files and can make the
  * appropriate extra objects and references.
  * @author Kim Rutherford
+ * @author Vivek Krishnakumar
  */
 public class MedicagoProteinFastaLoaderTask extends MedicagoFeatureFastaLoaderTask
 {
