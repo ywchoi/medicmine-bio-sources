@@ -1,4 +1,4 @@
-rootProject.name = 'bio-sources'
+rootProject.name = 'bio-source-medicmine2'
 
 //Configure here the bio-sources to be included in the gradle multi-projects
 //include ':bio-source-biogrid',':bio-source-chado-db'
@@ -6,3 +6,21 @@ rootProject.name = 'bio-sources'
 //project(':bio-source-biogrid').projectDir = new File(settingsDir, './biogrid')
 //project(':bio-source-chado-db').projectDir = new File(settingsDir, './chado-db')
 
+include ':bio-source-generif'
+project(':bio-source-generif').projectDir = new File(settingsDir, './generif')
+//include ':bio-source-inparanoid-homologs'
+//project(':bio-source-inparanoid-homologs').projectDir = new File(settingsDir, './inparanoid-homologs')
+include ':bio-source-medicago-expression'
+project(':bio-source-medicago-expression').projectDir = new File(settingsDir, './medicago-expression')
+include ':bio-source-medicago-fasta'
+project(':bio-source-medicago-fasta').projectDir = new File(settingsDir, './medicago-fasta')
+include ':bio-source-medicago-gff'
+project(':bio-source-medicago-gff').projectDir = new File(settingsDir, './medicago-gff')
+include ':bio-source-medicago-ortho'
+project(':bio-source-medicago-ortho').projectDir = new File(settingsDir, './medicago-ortho')
+include ':bio-source-mtgi-gene-mapping'
+project(':bio-source-mtgi-gene-mapping').projectDir = new File(settingsDir, './mtgi-gene-mapping')
+include ':bio-source-phytozome-homologs'
+project(':bio-source-phytozome-homologs').projectDir = new File(settingsDir, './phytozome-homologs')
+include ':bio-source-rnaseq-expression'
+project(':bio-source-rnaseq-expression').projectDir = new File(settingsDir, './rnaseq-expression')

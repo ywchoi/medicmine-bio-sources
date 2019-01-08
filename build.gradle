@@ -1,6 +1,6 @@
 ext {
-    imVersion = "2.+"
-    bioVersion = "2.+"
+    imVersion = System.getProperty("imVersion")
+    bioVersion = System.getProperty("bioVersion")
 }
 
 buildscript {
@@ -25,8 +25,8 @@ subprojects {
     apply plugin: 'dbmodel'
     apply plugin: 'biosource-dbmodel'
 
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
     repositories {
         mavenCentral()
@@ -42,6 +42,7 @@ subprojects {
     }
 
     dependencies {
+        compile files('/usr/local/projdata/0372/projects/MTG4/local/./git/jcvi-plant-genomics/intermine/bio/core/main/lib/biojava-1.7.1.jar')
         compile group: 'log4j', name: 'log4j', version: '1.2.17'
         compile group: 'org.intermine', name: 'bio-core', version: bioVersion
         compile group : "org.intermine", name: "intermine-resources", version: imVersion // log4j
@@ -49,8 +50,8 @@ subprojects {
         testCompile group: 'junit', name: 'junit', version: '4.8.2'
         testCompile group: "org.intermine", name: "intermine-integrate", version: imVersion, classifier: "testClasses"
         testCompile group: 'xmlunit', name: 'xmlunit', version: '1.0'
-        bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
         mergeModel group : "org.intermine", name: "intermine-objectstore", version: imVersion
+        bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
     }
 
     dbModelConfig {
