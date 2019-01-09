@@ -12,7 +12,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'org.intermine', name: 'plugin', version: '1.+'
+        classpath group: 'org.intermine', name: 'plugin', version: System.getProperty("imVersion")
     }
 }
 
