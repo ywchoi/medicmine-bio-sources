@@ -16,8 +16,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.biojava.bio.Annotation;
-import org.biojava.bio.seq.Sequence;
+import org.biojava.nbio.core.sequence.template.Sequence;
 import org.intermine.metadata.Model;
 import org.intermine.model.FastPathObject;
 import org.intermine.model.InterMineObject;
@@ -46,9 +45,7 @@ public class MedicagoProteinFastaLoaderTask extends MedicagoFeatureFastaLoaderTa
             org.intermine.model.bio.Sequence flymineSequence,
             BioEntity bioEntity, Organism organism, DataSet dataSet) throws ObjectStoreException {
 
-        Annotation annotation = bioJavaSequence.getAnnotation();
-        String mrnaIdentifier = bioJavaSequence.getName();
-        String header = (String) annotation.getProperty("description");
+        String mrnaIdentifier = bioJavaSequence.getAccession().getID();
 
         ObjectStore os = getIntegrationWriter().getObjectStore();
         Model model = os.getModel();
@@ -98,9 +95,7 @@ public class MedicagoProteinFastaLoaderTask extends MedicagoFeatureFastaLoaderTa
      */
     @Override
     protected String getIdentifier(Sequence bioJavaSequence) {
-        Annotation annotation = bioJavaSequence.getAnnotation();
-        String mrnaIdentifier = bioJavaSequence.getName();
-        String header = (String) annotation.getProperty("description");
+        String mrnaIdentifier = bioJavaSequence.getAccession().getID();
 
         // it doesn't matter too much what the Protein identifier is
         return mrnaIdentifier;

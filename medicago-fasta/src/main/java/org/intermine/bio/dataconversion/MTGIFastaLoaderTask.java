@@ -10,8 +10,8 @@ package org.intermine.bio.dataconversion;
  *
  */
 
-import org.biojava.bio.Annotation;
-import org.biojava.bio.seq.Sequence;
+import org.biojava.nbio.core.sequence.DNASequence;
+import org.biojava.nbio.core.sequence.template.Sequence;
 import org.intermine.model.bio.BioEntity;
 import org.intermine.model.bio.DataSet;
 import org.intermine.model.bio.Organism;
@@ -33,13 +33,11 @@ public class MTGIFastaLoaderTask extends FastaLoaderTask
             BioEntity bioEntity, Organism organism, DataSet dataSet)
         throws ObjectStoreException {
 
-        Annotation annotation = bioJavaSequence.getAnnotation();
-        if ( annotation.containsProperty("description") ) {
-            String header = (String) annotation.getProperty("description");
+            String header = ((DNASequence) bioJavaSequence).getOriginalHeader();
 
             // set the briefDescription attribute of a TC SequenceFeature
             // trim() the header to remove leading/trailing whitespaces
             bioEntity.setFieldValue("briefDescription", header.trim());
-        }
+//        }
     }
 }

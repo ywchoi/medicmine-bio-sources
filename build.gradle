@@ -42,7 +42,7 @@ subprojects {
     }
 
     dependencies {
-        compile files('/usr/local/projdata/0372/projects/MTG4/local/./git/jcvi-plant-genomics/intermine/bio/core/main/lib/biojava-1.7.1.jar')
+        compile group: 'org.biojava', name: 'biojava-core', version: '4.2.0'
         compile group: 'log4j', name: 'log4j', version: '1.2.17'
         compile group: 'org.intermine', name: 'bio-core', version: bioVersion
         compile group : "org.intermine", name: "intermine-resources", version: imVersion // log4j

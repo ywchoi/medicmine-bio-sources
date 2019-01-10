@@ -13,8 +13,8 @@ package org.intermine.bio.dataconversion;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.biojava.bio.Annotation;
-import org.biojava.bio.seq.Sequence;
+import org.biojava.nbio.core.sequence.DNASequence;
+import org.biojava.nbio.core.sequence.template.Sequence;
 import org.intermine.metadata.Model;
 import org.intermine.model.FastPathObject;
 import org.intermine.model.InterMineObject;
@@ -43,9 +43,8 @@ public class MedicagoCDSFastaLoaderTask extends MedicagoFeatureFastaLoaderTask
             org.intermine.model.bio.Sequence flymineSequence,
             BioEntity bioEntity, Organism organism, DataSet dataSet)
         throws ObjectStoreException {
-        Annotation annotation = bioJavaSequence.getAnnotation();
-        String mrnaIdentifier = bioJavaSequence.getName();
-        String header = (String) annotation.getProperty("description");
+        String header = ((DNASequence) bioJavaSequence).getOriginalHeader();
+        String mrnaIdentifier = bioJavaSequence.getAccession().getID();
 
         ObjectStore os = getIntegrationWriter().getObjectStore();
         Model model = os.getModel();
@@ -75,9 +74,7 @@ public class MedicagoCDSFastaLoaderTask extends MedicagoFeatureFastaLoaderTask
      */
     @Override
     protected String getIdentifier(Sequence bioJavaSequence) {
-        Annotation annotation = bioJavaSequence.getAnnotation();
-        String mrnaIdentifier = bioJavaSequence.getName();
-        String header = (String) annotation.getProperty("description");
+        String mrnaIdentifier = bioJavaSequence.getAccession().getID();
 
         // it doesn't matter too much what the CDS identifier is
         return mrnaIdentifier;
