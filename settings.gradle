@@ -24,3 +24,5 @@ include ':bio-source-phytozome-homologs'
 project(':bio-source-phytozome-homologs').projectDir = new File(settingsDir, './phytozome-homologs')
 include ':bio-source-rnaseq-expression'
 project(':bio-source-rnaseq-expression').projectDir = new File(settingsDir, './rnaseq-expression')
+include ':bio-source-medicmine-static'
+project(':bio-source-medicmine-static').projectDir = new File(settingsDir, './medicmine-static')
