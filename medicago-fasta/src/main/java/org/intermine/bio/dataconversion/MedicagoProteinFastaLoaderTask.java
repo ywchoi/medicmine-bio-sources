@@ -10,6 +10,9 @@ package org.intermine.bio.dataconversion;
  *
  */
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,7 +48,7 @@ public class MedicagoProteinFastaLoaderTask extends MedicagoFeatureFastaLoaderTa
             org.intermine.model.bio.Sequence flymineSequence,
             BioEntity bioEntity, Organism organism, DataSet dataSet) throws ObjectStoreException {
 
-        String mrnaIdentifier = bioJavaSequence.getAccession().getID();
+        String mrnaIdentifier = getIdentifier(bioJavaSequence);
 
         ObjectStore os = getIntegrationWriter().getObjectStore();
         Model model = os.getModel();
@@ -60,7 +63,7 @@ public class MedicagoProteinFastaLoaderTask extends MedicagoFeatureFastaLoaderTa
             InterMineObject mrna = getMRNA(mrnaIdentifier, organism, model);
             if (mrna != null) {
                 Set<? extends InterMineObject> mrnas = new HashSet(Collections.singleton(mrna));
-                bioEntity.setFieldValue("mRNA", mrnas);
+                //bioEntity.setFieldValue("mRNA", mrnas);
                 bioEntity.setFieldValue("transcripts", mrnas);
             }
 
@@ -95,10 +98,16 @@ public class MedicagoProteinFastaLoaderTask extends MedicagoFeatureFastaLoaderTa
      */
     @Override
     protected String getIdentifier(Sequence bioJavaSequence) {
-        String mrnaIdentifier = bioJavaSequence.getAccession().getID();
-
-        // it doesn't matter too much what the Protein identifier is
-        return mrnaIdentifier;
+        //String mrnaIdentifier = bioJavaSequence.getAccession().getID();
+        String header = bioJavaSequence.getAccession().getID();
+        final String regexp = "^(\\S+).*";
+        Pattern p = Pattern.compile(regexp);
+        Matcher m = p.matcher(header);
+        if (m.matches()) {
+          String mrnaIdentifier = m.group(1);
+          return mrnaIdentifier;
+        }
+        throw new RuntimeException("header doesn't match pattern \"" + regexp + "\": " + header);
     }
 
 }

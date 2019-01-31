@@ -44,8 +44,7 @@ public class MedicagoCDSFastaLoaderTask extends MedicagoFeatureFastaLoaderTask
             BioEntity bioEntity, Organism organism, DataSet dataSet)
         throws ObjectStoreException {
         String header = ((DNASequence) bioJavaSequence).getOriginalHeader();
-        String mrnaIdentifier = bioJavaSequence.getAccession().getID();
-
+        String mrnaIdentifier = getIdentifier(bioJavaSequence);
         ObjectStore os = getIntegrationWriter().getObjectStore();
         Model model = os.getModel();
         if (model.hasClassDescriptor(model.getPackageName() + ".CDS")) {
@@ -74,10 +73,14 @@ public class MedicagoCDSFastaLoaderTask extends MedicagoFeatureFastaLoaderTask
      */
     @Override
     protected String getIdentifier(Sequence bioJavaSequence) {
-        String mrnaIdentifier = bioJavaSequence.getAccession().getID();
-
-        // it doesn't matter too much what the CDS identifier is
-        return mrnaIdentifier;
-
+        String header = bioJavaSequence.getAccession().getID();
+        final String regexp = "^(\\S+)\\s+\\|.+";
+        Pattern p = Pattern.compile(regexp);
+        Matcher m = p.matcher(header);
+        if (m.matches()) {
+          String mrnaIdentifier = m.group(1);
+          return mrnaIdentifier;
+        }
+        throw new RuntimeException("header doesn't match pattern \"" + regexp + "\": " + header);
     }
 }

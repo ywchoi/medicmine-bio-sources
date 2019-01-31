@@ -357,7 +357,7 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
         }
 
         flymineSequence.setResidues(new PendingClob(sequence));
-        flymineSequence.setLength(bioJavaSequence.getLength());
+        flymineSequence.setLength(sequence.length());
         flymineSequence.setMd5checksum(md5checksum);
         Class<? extends InterMineObject> imClass;
         Class<?> c;
